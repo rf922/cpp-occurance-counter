@@ -17,6 +17,7 @@
 #include <span>
 #include <optional>
 #include <stdexcept>
+#include <chrono>
 
 using namespace std;
 
@@ -48,6 +49,9 @@ std::optional<int32_t> parseArgument(int argc, char** argv) {
 int main(int argc, char** argv) {
     try {
         auto targetValue = parseArgument(argc, argv).value_or(3);
+        
+        // Init timer 
+        auto startTime = chrono::steady_clock::now();
 
         //init the count to 0 and a temp container for value read
         int count = 0;
@@ -65,8 +69,14 @@ int main(int argc, char** argv) {
                 count++;
             }
         }
-
+        
+        // end time marker
+        auto endTime = chrono::steady_clock::now();
         cout << "Number of occurrences of '" << targetValue << "': " << count << endl;
+        
+        chrono::duration<double> elapsed_seconds = endTime - startTime;
+        cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+        
     } catch (const std::exception& e) {
         cerr << "An error occurred: " << e.what() << endl;
         return 1;
