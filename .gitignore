@@ -62,3 +62,5 @@ jspm_packages/
 ehthumbs.db
 Thumbs.db
 
+#exclude compiled main 
+main
