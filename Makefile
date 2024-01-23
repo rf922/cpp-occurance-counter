@@ -8,7 +8,7 @@ CXXFLAGS = -Wall -std=c++17
 TARGET = main
 
 # Source files
-SOURCES = main.cpp
+SOURCES = main.cpp DataCounter.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)

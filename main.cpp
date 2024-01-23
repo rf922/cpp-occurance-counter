@@ -1,9 +1,3 @@
-/*
- * 
- * 
- * 
- */
-
 /* 
  * File:   main.cpp
  * Author: rf922
@@ -12,6 +6,7 @@
  * for the occurances of the number '3'. 
  * Created on February 17, 2021, 10:48 AM Public
  */
+
 #include <iostream>
 #include <fstream>
 #include <span>
@@ -22,62 +17,10 @@
 #include <thread>
 #include <vector>
 
-#define DATA_FILE_PATH "data/threesData.bin"
+#include "DataCounter.h"
+
 
 using namespace std;
-
-/**
- * Parses command line arguments that are passed, expects an int N
- * @param argc
- * @param argv
- * @return 
- */
-
-std::optional<int32_t> parseArgument(int argc, char** argv) {
-    if (argc > 1) {
-        try {
-            int32_t val = std::stoi(argv[1]);
-            if (val < 0) {
-                std::cerr << "Invalid argument: " << argv[1] << " is a negative number." << std::endl;
-                return std::nullopt;
-            }
-            return val;
-        } catch (const std::invalid_argument& e) {
-            std::cerr << "Invalid argument: " << argv[1] << " is not an integer." << std::endl;
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Invalid argument: " << argv[1] << " is out of range for an int32_t." << std::endl;
-        }
-    }
-    return std::nullopt;
-}
-/**
- * logic to open and count occurrences of a val within a file and increment
- * the total count of occurrences 
- * @param val the value to be search
- * @param start starting pos in the file
- * @param end ending pos in the file
- * @param count total count of times val has been seen
- */
-void countOccurances(int32_t val, streampos start, streampos end, atomic<int>& count) {
-    //init the input file stream to read from 
-    ifstream dataFile(DATA_FILE_PATH, ios::binary);
-
-    if (!dataFile) {//ensure the file can be opened
-        throw runtime_error("threesData.bin could not be opened!");
-    }
-    
-    dataFile.seekg(start); // move to starting pos in the file
-    int32_t dataValue; //init val to store value from file
-    
-    // while the current pos has not reached the end and vals can be read 
-    while (dataFile.tellg() < end && dataFile.read(reinterpret_cast<char *> (&dataValue), sizeof (dataValue))) {
-        //compare and increment the count as maches are seen
-        if (dataValue == val) {
-            count++;
-        }
-    }
-
-}
 
 /**
  * main entry point for the program. Verifies that the file can be opened
@@ -125,7 +68,7 @@ int main(int argc, char** argv) {
             streampos start = i * chunckSize;
             streampos end = (i == numThreads - 1) ? fileSize : static_cast<streampos> ((i + 1) * chunckSize);
             // create and add each thread giving the func to execute, with its proper args
-            threads.emplace_back(countOccurances, targetValue, start, end, ref(totalCount));
+            threads.emplace_back(countOccurrences, targetValue, start, end, ref(totalCount));
         }
 
         for (auto& t : threads) { //join the threads 
