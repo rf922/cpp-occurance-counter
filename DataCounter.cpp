@@ -8,7 +8,8 @@
 #include "DataCounter.h"
 #include <iostream>
 #include <stdexcept>
-
+#include <vector>
+#include <thread>
 
 /**
  * Parses command line arguments that are passed, expects an int N
@@ -60,4 +61,49 @@ void countOccurrences(int32_t val, std::streampos start, std::streampos end, std
         }
     }
 
+}
+
+/**
+ * function to get the size of the data file
+ * @param filePath 
+ * @return 
+ */
+std::streampos getFileSize(const std::string& filePath) {
+    std::ifstream dataFile(filePath, std::ios::binary | std::ios::ate);
+    if (!dataFile) {
+        throw std::runtime_error(filePath + " could not be opened!");
+    }
+    return dataFile.tellg();
+}
+
+/**
+ * Core logic which processes the file itself by taking in a path, value to search for
+ * and the number of threads to be used. Then computes the appropriate chunck
+ * size. Then a for loop is used to init each thread by tracking the starting and ending 
+ * pos of the given thread and creating each thread passing countOccurances and a 
+ * refference to the number of occurances. Once the function completes the number of occurances
+ * are shown to the screen along with the number of threads that were used
+ * @param filePath
+ * @param val
+ * @param numThreads
+ */
+void processFile(const std::string& filePath, int32_t val, unsigned int numThreads) {
+    std::streampos fileSize = getFileSize(filePath);
+    std::atomic<int> totalCount = 0;
+    std::vector<std::thread> threads;
+    std::streampos chunkSize = fileSize / numThreads;
+
+    for (unsigned int i = 0; i < numThreads; ++i) {
+        std::streampos start = i * chunkSize;
+        std::streampos end = (i == numThreads - 1) ? fileSize : static_cast<std::streampos>((i + 1) * chunkSize);
+        threads.emplace_back(countOccurrences, val, start, end, std::ref(totalCount));
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    std::cout << "Number of occurrences of '" << val << "': " << totalCount << std::endl;
+    std::cout << "Number of Threads used : " << numThreads << std::endl;
+    
 }

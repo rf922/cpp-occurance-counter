@@ -33,55 +33,52 @@ using namespace std;
  */
 int main(int argc, char** argv) {
     try {
+
         // Init the timer and val to be searched for
         auto targetValue = parseArgument(argc, argv).value_or(3);
-        auto startTime = chrono::steady_clock::now();
-
+        
         // detect machines hardware to set an num threads to use
         unsigned int numThreads = thread::hardware_concurrency();
+        
+        // init timers
+        auto startTime = chrono::steady_clock::now();
+        auto endTime = chrono::steady_clock::now();
+        chrono::duration<double> elapsedTime;
+
         if (numThreads == 0) {
             numThreads = 1; // Default fallback for numthreads
         }
 
-        // verify that the file can be opened 
-        ifstream dataFile(DATA_FILE_PATH, ios::binary | ios::ate);
-        if (!dataFile) {
-            throw runtime_error("threesData.bin could not be opened!");
+
+        if (numThreads != 1) { //multi threading was available 
+            cout << "MultiThreading is supported \n";
+            /* using all available threads  */
+            startTime = chrono::steady_clock::now();
+            processFile(DATA_FILE_PATH, targetValue, numThreads);
+            endTime = chrono::steady_clock::now();
+            elapsedTime = chrono::duration_cast<chrono::duration<double>>(endTime - startTime);
+            cout << "Elapsed time: " << elapsedTime.count() << "s\n";
+
+
+            /*  Using half of the available threads */
+            startTime = chrono::steady_clock::now();
+            processFile(DATA_FILE_PATH, targetValue, numThreads / 2);
+            endTime = chrono::steady_clock::now();
+            elapsedTime = chrono::duration_cast<chrono::duration<double>>(endTime - startTime);
+            cout << "Elapsed time: " << elapsedTime.count() << "s\n";
+
+
+        } else {
+            cout << "MultiThreading is not supported " << endl;
+            cout << "Performing only single threaded run " << endl;
         }
 
-        // determine the files total size
-        streampos fileSize = dataFile.tellg();
-        dataFile.close();
-
-        
-        
-        atomic<int> totalCount = 0;
-        vector<thread> threads;
-        
-        //compute appropriate chunck size for each thread to process
-        streampos chunckSize = fileSize / numThreads;
-
-        // init each thread 
-        for (unsigned int i = 0; i < numThreads; ++i) {
-            
-            //compute the correct start and end pos
-            streampos start = i * chunckSize;
-            streampos end = (i == numThreads - 1) ? fileSize : static_cast<streampos> ((i + 1) * chunckSize);
-            // create and add each thread giving the func to execute, with its proper args
-            threads.emplace_back(countOccurrences, targetValue, start, end, ref(totalCount));
-        }
-
-        for (auto& t : threads) { //join the threads 
-            t.join();
-        }
-
-        // end time marker
-        auto endTime = chrono::steady_clock::now();
-        cout << "Number of occurrences of '" << targetValue << "': " << totalCount << endl;
-        cout << "Number of Threads used : " << numThreads << endl;
-        chrono::duration<double> elapsed_seconds = endTime - startTime;
-        cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
-
+        /*  using a single thread */
+        startTime = chrono::steady_clock::now();
+        processFile(DATA_FILE_PATH, targetValue, 1);
+        endTime = chrono::steady_clock::now();
+        elapsedTime = chrono::duration_cast<chrono::duration<double>>(endTime - startTime);
+        cout << "Elapsed time: " << elapsedTime.count() << "s\n";
     } catch (const std::exception& e) {
         cerr << "An error occurred: " << e.what() << endl;
         return 1;
