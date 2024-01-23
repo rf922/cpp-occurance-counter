@@ -2,13 +2,13 @@
 
 # Compiler and compiler flags
 CXX = g++
-CXXFLAGS = -Wall -std=c++17
+CXXFLAGS = -Wall -std=c++17 -Iinclude
 
 # Name of the executable
 TARGET = main
 
 # Source files
-SOURCES = main.cpp DataCounter.cpp
+SOURCES = src/main.cpp src/DataCounter.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
